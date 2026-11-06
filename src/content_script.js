@@ -33,10 +33,33 @@ import { initHistoryPage } from "@helpers/pages/history-page"
 import { initChannelPage } from "@helpers/pages/channel-page"
 import { initSearchPage } from "@helpers/pages/search-page"
 import { initSubscriptionsPage } from "@helpers/pages/subscriptions-page"
+import { initFavoritesPage } from "@helpers/pages/favorites-page"
 
 recordInstalledAtTimestamp()
 
 document.body.style.display = "block"
+
+// YouTube's SPA strips unknown query params from the URL, so the favourites
+// page can't live at its own URL. Instead we keep "/" and switch the view in place.
+const FAVORITES_SESSION_KEY = "fy_open_favorites"
+
+const initRootPage = () => {
+  if (sessionStorage.getItem(FAVORITES_SESSION_KEY) === "true") {
+    initFavoritesPage()
+  } else {
+    initHomePage()
+  }
+}
+
+document.addEventListener("fy:show-favorites", () => {
+  sessionStorage.setItem(FAVORITES_SESSION_KEY, "true")
+  initFavoritesPage()
+})
+
+document.addEventListener("fy:show-home", () => {
+  sessionStorage.removeItem(FAVORITES_SESSION_KEY)
+  initHomePage()
+})
 
 const initFY = () => {
   cleanUpFYClasses()
@@ -46,7 +69,7 @@ const initFY = () => {
   const pathname = window.location.pathname
 
   if (pathname === "/") {
-    initHomePage()
+    initRootPage()
   } else if (pathname === "/results") {
     initSearchPage()
   } else if (pathname === "/watch" || pathname.match(/\/live\/[\w-]+/)) {
